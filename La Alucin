@@ -1,0 +1,27 @@
+git clone https://github.com/open-wa/wa-automate-nodejs.git
+cd wa-automate-nodejs
+git remote remove origin
+git remote add origin https://github.com/luciadele0n/wa-bot-amigas.git
+git push -u origin main
+
+const { create, Client } = require('@open-wa/wa-automate');
+const SpotifyWebApi = require('spotify-web-api-node');
+const openai = require('openai'); // si quieres GPT
+
+create().then(client => {
+  client.onMessage(async msg => {
+    if (msg.body === '!sticker' && msg.hasMedia) {
+      const media = await client.decryptMedia(msg);
+      await client.sendImageAsSticker(msg.from, media.data);
+    }
+    if (msg.body.startsWith('!canción ')) {
+      const query = msg.body.split('!canción ')[1];
+      const url = `https://open.spotify.com/search/${encodeURIComponent(query)}`;
+      client.sendText(msg.from, `🎵 Aquí: ${url}`);
+    }
+    if (msg.body === '!reto') {
+      client.sendText(msg.from, 'Reto del día: envía una foto de tu desayuno 🍳');
+    }
+    // ... otros comandos
+  });
+});

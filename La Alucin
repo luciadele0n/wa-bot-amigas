@@ -1,62 +1,15 @@
-import { create, ev } from '@open-wa/wa-automate';
-import qrcode from 'qrcode-terminal';
-import * as fs from 'fs';
-import axios from 'axios';
-import 'dotenv/config';
-import OpenAI from 'openai';
-
-// --- Config ---
-const {
-  OPENAI_API_KEY,
-  OWNER_NUMBER,
-  BOT_NAME = 'La Alucina',
-  PREFIX = '!'
-} = process.env;
-
-const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
-
-// Guardamos historial simple en memoria (reinicia cada despliegue)
-const chatLogs = {};
-
-// Utilidad para formatear fecha “YYYY‑MM‑DD”
-const today = () => new Date().toISOString().slice(0, 10);
-
-// ---------------- BOT -----------------
-create({
-  sessionId: BOT_NAME.replace(/\s+/g, ''),
-  multiDevice: true,            // Soporte MD
-  qrTimeout: 0,                 // QR infinito hasta escanear
-  authTimeout: 60,              // 60 s para auth
-}).then(client => {
-  console.log(`${BOT_NAME} iniciado ✅`);
-
-  // Muestra QR en consola (texto) para Railway
-  ev.on('qr.**', qrCode => qrcode.generate(qrCode, { small: true }));
-
-  client.onMessage(async msg => {
-    try {
-      const { body = '', from, isGroupMsg, type } = msg;
-
-      if (!isGroupMsg) return;                       // Solo grupos
-
-      // ------ Acumular mensajes para resumen ------
-      chatLogs[from] = chatLogs[from] || {};
-      const log = chatLogs[from];
-      log[today()] = log[today()] || [];
-      if (type === 'chat') log[today()].push(body);
-
-      // Checar prefijo
-      if (!body.startsWith(PREFIX)) return;
-      const cmd = body.slice(PREFIX.length).trim();
-      const [head, ...rest] = cmd.split(' ');
-      const arg = rest.join(' ').trim();
-
-      // ---------- !sticker ----------
-      if (head === 'sticker' && msg.hasMedia) {
-        const mediaData = await client.decryptMedia(msg);
-        await client.sendImageAsSticker(from, mediaData);
-        return;
-      }
-
-      // ---------- !canción ----------
-      if (head === 'canción' && arg) {
+{
+  "name": "mi-bot-whatsapp",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp con QR en web",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.6.1",
+    "express": "^4.18.2",
+    "qrcode": "^1.5.3",
+    "socket.io": "^4.7.2"
+  }
+}
